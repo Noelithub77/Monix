@@ -4,7 +4,6 @@ import {
   TextInput,
   TouchableOpacity,
   Keyboard,
-  ToastAndroid,
   ActivityIndicator,
 } from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -17,7 +16,6 @@ import {StyleSheet} from 'react-native';
 import {askBert} from '../utils/BertQAHelper';
 
 const ContextContainer = ({context = '', setContext = text => {}}) => {
-  const [editable, setEditable] = useState(false);
   const contextRef = useRef(null);
   return (
     <View style={{flex: 1}}>
@@ -32,41 +30,9 @@ const ContextContainer = ({context = '', setContext = text => {}}) => {
           onChangeText={text => setContext(text)}
           style={styles.text}
           multiline
-          editable={editable}
+          editable={true}
           autoCapitalize="sentences"
-          onBlur={() => setEditable(false)}
         />
-      </View>
-      <View style={{alignItems: 'flex-end'}}>
-        {editable ? (
-          <TouchableOpacity
-            onPress={() => setEditable(false)}
-            style={styles.buttonContainer}>
-            <Icon
-              name="content-save-outline"
-              size={22}
-              color="white"
-              style={styles.iconPadding}
-            />
-            <Text style={styles.buttonText}>Save</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            onPress={() => {
-              contextRef.current.focus &&
-                setTimeout(() => contextRef.current.focus(), 0);
-              setEditable(true);
-            }}
-            style={styles.buttonContainer}>
-            <Icon
-              name="file-document-edit-outline"
-              size={22}
-              color="white"
-              style={styles.iconPadding}
-            />
-            <Text style={styles.buttonText}>Edit</Text>
-          </TouchableOpacity>
-        )}
       </View>
     </View>
   );
@@ -76,6 +42,7 @@ const MessageInput = ({
   question = '',
   context = '',
   setQuestion = text => {},
+  setAnswer = text => {},
 }) => {
   const [inputHeight, setInputHeight] = useState(50);
   const [loading, setLoading] = useState(false);
@@ -86,11 +53,10 @@ const MessageInput = ({
     try {
       setLoading(true);
       const res = await askBert(context, question);
-      const probableAnswer =
-        (res?.[0] && res[0]?.text) || 'Unable to find an answer!';
+      const answers = res.map((answer, index) => `${index + 1}. ${answer.text}`).join('\n') || 'Unable to find an answer!';
 
       setTimeout(() => {
-        ToastAndroid.show(probableAnswer, ToastAndroid.LONG);
+        setAnswer(answers);
         setLoading(false);
         setQuestion('');
       }, 700);
@@ -158,7 +124,11 @@ const BertQA = ({navigation}) => {
         question={question}
         context={context}
         setQuestion={setQuestion}
+        setAnswer={setAnswer}
       />
+      <View style={styles.answerContainer}>
+        <Text style={styles.answerText}>{answer}</Text>
+      </View>
     </KeyboardAwareScrollView>
   );
 };
@@ -228,6 +198,15 @@ const styles = StyleSheet.create({
   },
   active: {
     opacity: 1,
+  },
+  answerContainer: {
+    marginTop: 20,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: 'white',
+  },
+  answerText: {
+    color: 'black',
   },
 });
 
