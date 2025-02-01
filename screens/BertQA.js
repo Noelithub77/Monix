@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { getTransactionInfo } from 'transaction-sms-parser/dist/lib';
 
 import React, {useRef, useState} from 'react';
 
@@ -38,6 +39,33 @@ const ContextContainer = ({context = '', setContext = text => {}}) => {
   );
 };
 
+const predefinedQuestions = [
+  "How much amount was transferred?",
+  "What is the account type?",
+  "What is the account number?",
+  "What is the account name?",
+  "What is the available balance?",
+  "What is the outstanding balance?",
+  "What is the transaction type?",
+  "What is the reference number?",
+  "Who is the merchant?"
+];
+
+const getTransactionDetails = (context) => {
+  const transactionInfo = getTransactionInfo(context);
+  return {
+    "How much amount was transferred?": transactionInfo.transaction.amount || 'N/A',
+    "What is the account type?": transactionInfo.account.type || 'N/A',
+    "What is the account number?": transactionInfo.account.number || 'N/A',
+    "What is the account name?": transactionInfo.account.name || 'N/A',
+    "What is the available balance?": transactionInfo.balance?.available || 'N/A',
+    "What is the outstanding balance?": transactionInfo.balance?.outstanding || 'N/A',
+    "What is the transaction type?": transactionInfo.transaction.type || 'N/A',
+    "What is the reference number?": transactionInfo.transaction.referenceNo || 'N/A',
+    "Who is the merchant?": transactionInfo.transaction.merchant || 'N/A'
+  };
+};
+
 const MessageInput = ({
   question = '',
   context = '',
@@ -54,9 +82,10 @@ const MessageInput = ({
       setLoading(true);
       const res = await askBert(context, question);
       const answers = res.map((answer, index) => `${index + 1}. ${answer.text}`).join('\n') || 'Unable to find an answer!';
+      const transactionDetails = getTransactionDetails(context)[question];
 
       setTimeout(() => {
-        setAnswer(answers);
+        setAnswer(`BERT Answer:\n${answers}\n\nRegex Solution:\n${transactionDetails}`);
         setLoading(false);
         setQuestion('');
       }, 700);
@@ -112,22 +141,33 @@ const MessageInput = ({
 };
 
 const BertQA = ({navigation}) => {
-  const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState('');
-  const [context, setContext] = useState('');
+  const [context, setContext] = useState('my name is noel');
+  const [answers, setAnswers] = useState(predefinedQuestions.map(() => ''));
+
+  const setAnswerAtIndex = (index, answer) => {
+    const newAnswers = [...answers];
+    newAnswers[index] = answer;
+    setAnswers(newAnswers);
+  };
+
   return (
     <KeyboardAwareScrollView
       contentContainerStyle={styles.mainContainer}
       keyboardShouldPersistTaps="always">
       <ContextContainer context={context} setContext={setContext} />
-      <MessageInput
-        question={question}
-        context={context}
-        setQuestion={setQuestion}
-        setAnswer={setAnswer}
-      />
+      {predefinedQuestions.map((question, index) => (
+        <MessageInput
+          key={index}
+          question={question}
+          context={context}
+          setQuestion={() => {}}
+          setAnswer={(answer) => setAnswerAtIndex(index, answer)}
+        />
+      ))}
       <View style={styles.answerContainer}>
-        <Text style={styles.answerText}>{answer}</Text>
+        {answers.map((answer, index) => (
+          <Text key={index} style={styles.answerText}>{answer}</Text>
+        ))}
       </View>
     </KeyboardAwareScrollView>
   );

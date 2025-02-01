@@ -28,6 +28,8 @@ public class BertQuestionAnswererModule extends ReactContextBaseJavaModule {
     }
 
     String modelFile = "bertQA.tflite";
+    // String modelFile = "model_fp16.tflite";
+
 
     @Override
     public String getName() {
