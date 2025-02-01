@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   Keyboard,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -70,7 +71,7 @@ const MessageInput = ({
   question = '',
   context = '',
   setQuestion = text => {},
-  setAnswer = text => {},
+  setAnswer,
 }) => {
   const [inputHeight, setInputHeight] = useState(50);
   const [loading, setLoading] = useState(false);
@@ -85,7 +86,10 @@ const MessageInput = ({
       const transactionDetails = getTransactionDetails(context)[question];
 
       setTimeout(() => {
-        setAnswer(`BERT Answer:\n${answers}\n\nRegex Solution:\n${transactionDetails}`);
+        setAnswer({
+          bertAnswer: answers,
+          regexSolution: transactionDetails
+        });
         setLoading(false);
         setQuestion('');
       }, 700);
@@ -141,13 +145,21 @@ const MessageInput = ({
 };
 
 const BertQA = ({navigation}) => {
-  const [context, setContext] = useState('my name is noel');
+  const [context, setContext] = useState(`Sent Rs.80.00
+From HDFC Bank A/C x0060
+To THE MILLET CAFE
+On 22/01/25
+Ref 502230438643
+Not You?
+Call 18002586161/SMS BLOCK UPI to 7308080808`);
   const [answers, setAnswers] = useState(predefinedQuestions.map(() => ''));
+  const [lastAnswer, setLastAnswer] = useState({ bertAnswer: '', regexSolution: '' });
 
   const setAnswerAtIndex = (index, answer) => {
     const newAnswers = [...answers];
     newAnswers[index] = answer;
     setAnswers(newAnswers);
+    setLastAnswer(answer);
   };
 
   return (
@@ -165,9 +177,14 @@ const BertQA = ({navigation}) => {
         />
       ))}
       <View style={styles.answerContainer}>
-        {answers.map((answer, index) => (
-          <Text key={index} style={styles.answerText}>{answer}</Text>
-        ))}
+        <View style={styles.answerBlock}>
+          <Text style={styles.answerHeader}>Question:</Text>
+          <Text style={styles.questionText}>{predefinedQuestions[answers.indexOf(lastAnswer)]}</Text>
+          <Text style={styles.answerHeader}>BERT Answer:</Text>
+          <Text style={styles.answerText}>{lastAnswer.bertAnswer}</Text>
+          <Text style={styles.answerHeader}>Regex Solution:</Text>
+          <Text style={styles.answerText}>{lastAnswer.regexSolution}</Text>
+        </View>
       </View>
     </KeyboardAwareScrollView>
   );
@@ -175,9 +192,8 @@ const BertQA = ({navigation}) => {
 
 const styles = StyleSheet.create({
   mainContainer: {
-    flex: 1,
-    display: 'flex',
-    justifyContent: 'space-between',
+    flexGrow: 1,
+    justifyContent: 'flex-start',
     padding: 15,
     backgroundColor: Colors.backgroundColor,
   },
@@ -245,8 +261,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: 'white',
   },
+  answerBlock: {
+    marginBottom: 10,
+  },
+  answerHeader: {
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  questionText: {
+    fontStyle: 'italic',
+    color: 'black',
+    marginBottom: 5,
+  },
   answerText: {
     color: 'black',
+    marginBottom: 10,
   },
 });
 

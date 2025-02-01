@@ -21,7 +21,8 @@
     "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-safe-area-context": "^4.7.4",
     "react-native-screens": "^3.27.0",
-    "react-native-vector-icons": "^10.0.2"
+    "react-native-vector-icons": "^10.0.2",
+    "transaction-sms-parser": "^3.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
